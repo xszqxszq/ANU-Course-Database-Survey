@@ -1,0 +1,326 @@
+{% include 'header.html' %}
+<script type="">
+    var nextQuestionId = 1;
+    var nextOptionId = 2;
+    function getNowOptions() {
+        return Number($('#now-option-count').val());
+    }
+    function setNowOptions(now) {
+        $('#now-option-count').val(now);
+    }
+    function cleanOptions() {
+        $('#now-question-content').val('');
+        $('#now-option').hide();
+        $('#now-rating').hide();
+        $('#now-question-type').val('Text');
+        $('.option-group').remove();
+        nextOptionId = 1;
+        addOptionAfter(0);
+        setNowOptions(1);
+        $('#now-rating-start').val(1);
+        $('#now-rating-end').val(5);
+        $('#now-rating-step').val(1);
+    }
+    function newQuestion() {
+        var qId = nextQuestionId ++;
+        var qContent = $('#now-question-content').val();
+        var qType = $('#now-question-type').val();
+        var options = $('<ul>', {
+            'class': 'list-group'
+        });
+        if (qType == "Dropdown" || qType == "Checkbox") {
+            $('.option-group').each(function() {
+                options.append($('<li>', {
+                    'class': 'list-group-item',
+                    'html': $(this).children('input').val()
+                }));
+            });
+        } else if (qType == "Rating") {
+            var rStart = Number($('#now-rating-start').val());
+            var rEnd = Number($('#now-rating-end').val());
+            var rStep = Number($('#now-rating-step').val());
+            if (rStep <= 0 || rEnd < rStart) {
+                cleanOptions();
+                return;
+            }
+            for (var i = rStart; i <= rEnd; i += rStep) {
+                $('.option-group').each(function() {
+                    options.append($('<li>', {
+                        'class': 'list-group-item',
+                        'html': i
+                    }));
+                });
+            }
+        } else {
+            options = $('<span>', {
+                'html': 'N/A'
+            });
+        }
+        $('tbody').append($('<tr>', {
+            'class': 'question',
+            'id': 'question-' + qId,
+            'html': $('<td>', {
+                'class': 'question-content',
+                'html': qContent
+            }).add($('<td>', {
+                'class': 'question-type',
+                'html': qType
+            })).add($('<td>', {
+                'class': 'question-options',
+                'html': options
+            })).add($('<button>', {
+                'class': 'btn btn-danger my-3 mx-2',
+                'type': 'button',
+                'onClick': 'deleteQuestion(' + qId + ')',
+                'html': 'Delete question'
+            }))
+        }));
+        cleanOptions();
+    }
+    function deleteQuestion(id) {
+        $('#question-' + id).remove();
+    }
+    function addOptionAfter(before) {
+        var id = nextOptionId ++;
+        setNowOptions(getNowOptions() + 1);
+        $('<div>', {
+            'class': 'input-group mb-3 option-group',
+            'id': 'now-option-group-' + id,
+            'html': $('<input>', {
+                'type': 'text',
+                'class': 'form-control',
+                'placeholder': 'Enter option here...',
+                'id': 'now-option-' + id
+            }).add($('<div>', {
+                'class': 'input-group-append',
+                'html': $('<button>', {
+                    'class': 'btn btn-primary',
+                    'type': 'button',
+                    'onClick': 'addOptionAfter(' + id + ')',
+                    'html': $('<i>', {
+                        'class': 'fa fa-plus fa-1'
+                    })
+                }).add($('<button>', {
+                    'class': 'btn btn-danger',
+                    'type': 'button',
+                    'onClick': 'deleteOption(' + id + ')',
+                    'html': $('<i>', {
+                        'class': 'fa fa-close fa-1'
+                    })
+                }))
+            }))
+        }).insertAfter($('#now-option-group-' + before));
+    }
+    function deleteOption(id) {
+        var nowOptions = getNowOptions();
+        if (nowOptions > 1) {
+            $('#now-option-group-' + id).remove();
+            setNowOptions(nowOptions - 1);
+        }
+    }
+
+    $(document).ready(function() {
+        $('#now-question-type').change(function() {
+            var qType = $('#now-question-type').val();
+            switch(qType) {
+                case 'Text':
+                    $('#now-option').hide();
+                    $('#now-rating').hide();
+                    break;
+                case 'Dropdown':
+                    $('#now-option').show();
+                    $('#now-rating').hide();
+                    break;
+                case 'Checkbox':
+                    $('#now-option').show();
+                    $('#now-rating').hide();
+                    break;
+                case 'Rating':
+                    $('#now-option').hide();
+                    $('#now-rating').show();
+                    break;
+                case 'LongText':
+                    $('#now-option').hide();
+                    $('#now-rating').hide();
+                    break;
+                default:
+                    break;
+            }
+        });
+        $('#survey').submit(function (event) {
+            event.preventDefault();
+            var surveyStatus = 'Normal';
+            if (document.activeElement.id == 'submit-draft')
+                surveyStatus = 'Draft';
+            else if (document.activeElement.id == 'submit-template')
+                surveyStatus = 'Template';
+            var surveyName = $('#title').val();
+            var questions = [];
+            $('.question').each(function() {
+                var qContent = $(this).children('.question-content').html();
+                var qType = $(this).children('.question-type').html();
+                var options = [];
+                if (qType != 'Text' && qType != 'LongText') {
+                    $(this).find('li').each(function() {
+                        options.push($(this).html());
+                    });
+                }
+                questions.push({
+                    'content': qContent,
+                    'type': qType,
+                    'options': options
+                })
+            });
+            var csrf = $("[name='csrfmiddlewaretoken']").val();
+            $.post('/survey/create', {
+                'csrfmiddlewaretoken': csrf,
+                'content': JSON.stringify({
+                    'title': surveyName,
+                    'startdate': $('#startdate').val(),
+                    'enddate': $('#enddate').val(),
+                    'reminders': $('#reminders').val(),
+                    'questions': questions,
+                    'status': surveyStatus
+                })
+            }, function(result) {
+                window.location.href = '/survey/manage';
+            }, 'json')
+            return false;
+        });
+        $('#startdate').datetimepicker({
+            uiLibrary: 'bootstrap4',
+            modal: false,
+            footer: true,
+            format: 'yyyy-mm-dd hh:mm:ss',
+            defaultDate: new Date()
+        });
+        $('#enddate').datetimepicker({
+            uiLibrary: 'bootstrap4',
+            modal: false,
+            footer: true,
+            format: 'yyyy-mm-dd hh:mm:ss',
+            defaultDate: new Date()
+        });
+    })
+</script>
+
+<div class="col-sm-12" style="background-color:rgb(255, 255, 255);">
+    <h2>Create a new survey</h2>
+    <hr>
+    <form action="/survey/create" method="post" class="needs-validation" id="survey" novalidate>
+        {% csrf_token %}
+        {% if errorMessage %}
+        <div class="alert alert-danger">
+            <strong>{{ errorMessage }}</strong>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="title">Survey Title:</label>
+            <input type="text" class="form-control" placeholder="Enter survey title here..." id="title">
+        </div>
+
+        <div class="form-group">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">Add a new question...</button>
+        </div>
+
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Question</th>
+                    <th>Type</th>
+                    <th>Options</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <div class="modal fade" id="myModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add a new question</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Question:</label>
+                            <input type="text" class="form-control" placeholder="Enter question here..." id="now-question-content">
+                        </div>
+                        <div class="form-group">
+                            <label>Type:</label>
+                            <select class="form-control" id="now-question-type">
+                                <option value="Text">Text</option>
+                                <option value="Dropdown">Dropdown</option>
+                                <option value="Checkbox">Checkbox</option>
+                                <option value="Rating">Rating</option>
+                                <option value="LongText">Long text</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="now-option" style="display:none;">
+                            <hr>
+                            <label>Options:</label>
+                            <input type="hidden" value="1" id="now-option-count">
+                            <div id="now-option-group-0"></div>
+                            <div class="input-group mb-3 option-group" id="now-option-group-1">
+                                <input type="text" class="form-control" placeholder="Enter option here..." id="now-option-1">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" onClick="addOptionAfter(1)"><i class="fa fa-plus fa-1"></i></button>  
+                                    <button class="btn btn-danger" type="button" onClick="deleteOption(1)"><i class="fa fa-close fa-1"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group" id="now-rating" style="display:none;">
+                            <div class="form-group">
+                                <label>Rating starts At:</label>
+                                <input type="text" class="form-control" placeholder="Enter start value here..." value="1" id="now-rating-start">
+                            </div>
+                            <div class="form-group">
+                                <label>Rating ends At:</label>
+                                <input type="text" class="form-control" placeholder="Enter end value here..." value="5" id="now-rating-end">
+                            </div>
+                            <div class="form-group">
+                                <label>Step width:</label>
+                                <input type="text" class="form-control" placeholder="Enter step width here..." value="1" id="now-rating-step">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" onClick="newQuestion()">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="form-inline my-3">
+            <div class="input-group mb-6 mx-2 my-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Start Date</span>
+                </div>
+                <input id="startdate">
+            </div>
+            <div class="input-group mb-6 mx-2 my-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">End Date</span>
+                </div>
+                <input id="enddate">
+            </div>
+            <div class="input-group mb-6 mx-2 my-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Reminders</span>
+                </div>
+                <input type="text" class="form-control" id="reminders" value="1">
+            </div>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary" id="submit-normal">Submit</button>
+            <button type="submit" class="btn btn-primary" id="submit-draft">Save as draft</button>
+            <button type="submit" class="btn btn-primary" id="submit-template">Save as template</button>
+        </div>
+    </form>
+</div>
+{% include 'footer.html' %}

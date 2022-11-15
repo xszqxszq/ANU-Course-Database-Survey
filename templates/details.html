@@ -1,0 +1,77 @@
+{% include 'header.html' %}
+<h1>Survey Details</h1>
+<div class="card mt-3">
+	<div class="card-header"><h5 class="mb-0">{{ survey.title }}</h5></div>
+	<div class="card-body">
+	<label for="SurveyID">Survey ID: {{ survey.id }}</label>
+	<br>
+	<label for="CreateDate">Survey Type: {{ survey.status }}</label>
+	<br>
+	<label for="CreateDate">Create Date: {{ survey.createDate }}</label>
+	<br>
+	<label for="StartDate">Start Date: {{ survey.startDate }}</label>
+	<br>
+	<label for="EndDate">End Date: {{ survey.endDate }}</label>
+	<br>
+	<label for="Records">Finished times: {{ records }}</label>
+	<br>
+	</div>
+	<div class="card-footer"><div class="btn-group mb-0">
+	{% if user.permGroup != 'DataAnalyst' %}
+	<button type="submit" class="btn btn-primary" data-toggle="modal" data-target="#EndModal">End this survey</button>
+	<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#DeleteModal">Delete this survey</button>
+	{% endif %}
+	<a class="btn btn-primary" href="/survey/records?survey={{ survey.id }}">Manage records</a>
+	<a class="btn btn-primary" href="/survey/analysis?id={{ survey.id }}">Analysis</a>
+</div></div>
+</div>
+
+	<div class="modal fade" id="DeleteModal">
+		<div class="modal-dialog">
+			<div class="modal-content">
+			 
+				<!-- 模态框头部 -->
+				<div class="modal-header">
+					<h4 class="modal-title">Warning!</h4>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+				
+				<!-- 模态框主体 -->
+				<div class="modal-body">
+					Do you really want to delete this survey?
+				</div>
+				
+				<!-- 模态框底部 -->
+				<div class="modal-footer">
+					<button type="submit" class="btn btn-primary" data-dismiss="modal" onClick="window.location.href='/survey/delete?id={{ survey.id }}'">Yes</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+				</div>
+
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="EndModal">
+		<div class="modal-dialog">
+			<div class="modal-content">
+			 
+				<!-- 模态框头部 -->
+				<div class="modal-header">
+					<h4 class="modal-title">Warning!</h4>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+				
+				<!-- 模态框主体 -->
+				<div class="modal-body">
+					Do you really want to end this survey?
+				</div>
+				
+				<!-- 模态框底部 -->
+				<div class="modal-footer">
+					<button type="submit" class="btn btn-primary" data-dismiss="modal" onClick="window.location.href='/survey/end?id={{ survey.id }}'">Yes</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+{% include 'footer.html' %}

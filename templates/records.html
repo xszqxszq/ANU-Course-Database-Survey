@@ -1,0 +1,20 @@
+{% include 'header.html' %}
+<h1>Survey Records</h1>
+{% for record in recordAll %}
+<div class="form-group">
+	<div class="card bg-light text-dark">
+		<div class="card-body">
+			<label for="RecordID">Record ID: {{ record.id }}</label>
+			<br>
+			{% if user.permGroup == 'SystemAdmin' %}
+			<label for="RespondentName">Respondent Name: {{ record.respondent.firstName }} {{ record.respondent.lastName }}</label>
+			<br>
+			{% endif %}
+			<label for="SubmitDate">Submit Date: {{ record.submitDate }}</label>
+			<br>
+			<a href="/survey/records?record={{ record.id }}" class="card-link">View Record</a>
+		</div>
+	</div>
+</div>
+{% endfor %}
+{% include 'footer.html' %}

@@ -1,0 +1,41 @@
+{% include 'header.html' %}
+<h1>Survey Lists</h1>
+<form class="input-group my-4" method="get" action="/survey/manage">
+	<input type="text" class="form-control" name="id" id="id" placeholder="Search by Survey ID:">
+    <div class="input-group-append">
+		<button type="submit" class="btn btn-primary">Search!</button>
+	</div>
+	<!-- 精确搜索ID=input的问卷 -->
+</form>
+
+{% for survey in surveyAll %}
+<div class="form-group">
+	<div class="card bg-light text-dark">
+		<div class="card-body">
+			<h3 class="card-title">{{ survey.title }}</h3>
+			<hr>
+			<label for="SurveyID">Survey ID: {{ survey.id }}</label>
+			<br>
+			<label for="CreatorID">Creator: {{ survey.creator.nickname }}</label>
+			<br>
+			<label for="CreateDate">Create Date: {{ survey.createDate }}</label>
+			<br>
+			<label for="StartDate">Start Date: {{ survey.startDate }}</label>
+			<br>
+			<label for="StartDate">End Date: {{ survey.endDate }}</label>
+			<br>
+			<label for="status">Survey Stat:</label>
+			{% if survey.startDate > nowDate %}
+			<span class="badge badge-pill badge-warning">Ready</span>
+			{% elif survey.startDate <= nowDate and nowDate <= survey.endDate %}
+			<span class="badge badge-pill badge-success">Running</span>
+			{% else %}
+			<span class="badge badge-pill badge-warning">Ended</span>
+			{% endif %}
+			<br>
+			<a href="/survey/manage?id={{ survey.id }}" class="card-link">Manage Survey</a>
+		</div>
+	</div>
+</div>
+{% endfor %}
+{% include 'footer.html' %}

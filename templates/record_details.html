@@ -1,0 +1,32 @@
+{% include 'header.html' %}
+	<h1>{{ title }}</h1>
+	<form action="/survey/submit" method="post">
+		{% csrf_token %}
+		<input type="hidden" name="survey_id" value="{{ surveyID }}">
+		{% for i, q in questions %}
+			<h4 class="my-4">{{ i | add:1 }}. {{ q.content }}</h4>
+			{% if q.questionType == 'Text' %}
+	    	<div class="form-group"><input class="form-control" name="{{ q.id }}" readonly="readonly" value="{{ q.recordanswer_set.all.first.answer }}"/></div>
+		    {% elif q.questionType == 'LongText' %}
+	    	<div class="form-group"><textarea class="form-control" name="{{ q.id }}" readonly="readonly"/>{{ q.recordanswer_set.all.first.answer }}</textarea></div>
+		    {% elif q.questionType == 'Dropdown' %}
+	    	<div class="form-group"><select class="form-control" name="{{ q.id }}" readonly="readonly">
+	    		{% for o in q.surveyoption_set.all %}
+	    		<option value="{{ o.id }}" readonly="readonly" {% if o.id in options %} selected="selected" {% endif %}>{{ o.value }}</option>
+	    		{% endfor %}
+	    	</select></div>
+		    {% elif q.questionType == 'Checkbox' %}
+	    	{% for o in q.surveyoption_set.all %}
+	    	<div class="form-check"><label class="form-check-label"><input type="checkbox" class="form-check-input" name="{{ q.id }}" value="{{ o.id }}"  onclick="return false;" {% if o.id in options %} checked {% endif %}>{{ o.value }}</label></div>
+	    	{% endfor %}
+		    {% elif q.questionType == 'Rating' %}
+	    	{% for o in q.surveyoption_set.all %}
+	    	<div class="radio"><label><input type="radio" name="{{ q.id }}" value="{{ o.id }}" readonly="readonly" {% if o.id in options %} checked {% endif %}> {{ o.value }}</label></div>
+	    	{% endfor %}
+		    {% endif %}
+	    {% endfor %}
+		{% if user.permGroup == 'SystemAdmin' %}
+	    <div class="form-group"><h4 class="my-4">Email address:</h4><input class="form-control" type="text" name="email" readonly="readonly" value="{{ record.respondent.email }}"></div>
+	    {% endif %}
+	</form>
+{% include 'footer.html' %}
