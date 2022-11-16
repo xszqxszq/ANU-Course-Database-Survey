@@ -217,7 +217,7 @@ def respondent(request):
 			for f in request.FILES.getlist('file'):
 				reader = csv.reader(StringIO(f.read().decode('UTF-8')))
 				for row in reader:
-					Respondent.objects.create(firstName=row[0], lastName=row[1], email=row[2], company=row[3], position=row[4], phone=row[5])
+					Respondent.objects.create(firstName=row[0].strip(), lastName=row[1].strip(), email=row[2].strip(), company=row[3].strip(), position=row[4].strip(), phone=row[5].strip())
 		else:
 			groupTarget = [int(i) for i in request.POST.getlist('target')]
 			groupName = request.POST.get('group-name')
