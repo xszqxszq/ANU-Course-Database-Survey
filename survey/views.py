@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count
 from django.http import JsonResponse
 from survey.models import *
 from user.utils import *
@@ -7,6 +7,8 @@ from user.utils import *
 import json
 import datetime
 import pytz
+import csv
+from io import StringIO
 
 def view(request):
 	context = {}
@@ -201,3 +203,35 @@ def analysis(request):
 		questions.append(q)
 	context['questions'] = enumerate(questions)
 	return render(request, 'analysis.html', context=context)
+
+def respondent(request):
+	user = getUser(request)
+	context = {'title': 'Manage respondent'}
+	if user:
+		context['nickname'] = user.nickname
+		context['user'] = user
+	else:
+		return redirect('/user/login')
+	if request.method == 'POST':
+		if request.FILES:
+			for f in request.FILES.getlist('file'):
+				reader = csv.reader(StringIO(f.read().decode('UTF-8')))
+				for row in reader:
+					Respondent.objects.create(firstName=row[0], lastName=row[1], email=row[2], company=row[3], position=row[4], phone=row[5])
+		else:
+			groupTarget = [int(i) for i in request.POST.getlist('target')]
+			groupName = request.POST.get('group-name')
+			query = RespondentGroup.objects.filter(name=groupName)
+			if query.count():
+				group = query.first()
+			else:
+				group = RespondentGroup.objects.create(name=groupName)
+			Respondent.objects.filter(id__in=groupTarget).update(group=group)
+	respondents = Respondent.objects.all()
+	context['count'] = {}
+	for i in respondents:
+		context['count'][i.id] = 0
+	for i in RecordInfo.objects.values('respondent').annotate(count=Count('id')).filter(respondent__in=respondents).all():
+		context['count'][i['respondent']] = i['count']
+	context['respondentAll'] = [(i.id, i) for i in respondents]
+	return render(request, 'respondent.html', context=context)

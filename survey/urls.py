@@ -10,4 +10,5 @@ urlpatterns = [
 	path('delete', views.delete),
 	path('records', views.records),
 	path('analysis', views.analysis),
+	path('respondent', views.respondent),
 ]
