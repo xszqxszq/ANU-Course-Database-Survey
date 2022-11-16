@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['anu.xszq.xyz']
 
-CRSF_TRUSTED_ORIGINS = ['https://anu.xszq.xyz']
+CSRF_TRUSTED_ORIGINS = ['https://anu.xszq.xyz']
 
 
 # Application definition
